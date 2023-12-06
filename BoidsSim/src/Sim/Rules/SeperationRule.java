@@ -3,6 +3,7 @@ package Sim.Rules;
 import java.util.List;
 
 import Sim.Boid.Boid;
+import Sim.BoidSimulationEnvironment;
 import Sim.Vector;
 
 public class SeperationRule implements IRule {
@@ -26,8 +27,9 @@ public class SeperationRule implements IRule {
         for (Boid other : boids) {
             double distance = boid.distanceTo(other);
             if (distance < Boid.SEPARATION_DISTANCE) {
-                double diffX = boid.x - other.x;
-                double diffY = boid.y - other.y;
+            	Vector local = boid.FindLocalCoordinates(other);
+                double diffX = boid.x - local.x;
+                double diffY = boid.y - local.y;
                 diffX /= distance;
                 diffY /= distance;
                 steering.add(diffX, diffY);

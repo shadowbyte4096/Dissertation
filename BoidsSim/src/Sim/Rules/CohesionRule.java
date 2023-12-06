@@ -1,7 +1,6 @@
 package Sim.Rules;
 
 import java.util.List;
-
 import Sim.Vector;
 import Sim.Boid.Boid;
 
@@ -25,7 +24,8 @@ public class CohesionRule implements IRule {
 
         if (count > 0) {
 	        for (Boid other : boids) {
-	            steering.add(other.x, other.y);
+	        	Vector local = boid.FindLocalCoordinates(other);
+	            steering.add(local.x, local.y);
 	        }
 
             steering.divide(count);

@@ -15,6 +15,7 @@ import Sim.SearchFilters.FovFilter;
 import Sim.SearchFilters.IFilter;
 import Sim.SearchFilters.NeighborhoodFilter;
 import Sim.SearchFilters.ObstructedVisionFilter;
+import Sim.Stats.Stats;
 
 public class BoidSimulationEnvironment extends JPanel {
 	public static final int WIDTH = 800;
@@ -24,7 +25,8 @@ public class BoidSimulationEnvironment extends JPanel {
     private static final double ALIGNMENT_WEIGHT = 1;
     private static final double COHESION_WEIGHT = 1;
     private static final double SEPARATION_WEIGHT = 2;
-    private static final double FOV_FILTER_ANGLE = 135.0;
+    private static final double FOV_FILTER_ANGLE_BEHIND = 45;
+    private static final double FOV_FILTER_ANGLE_INFRONT = 5;
 	
     private List<Boid> boids;
     private List<IRule> rules;
@@ -51,7 +53,8 @@ public class BoidSimulationEnvironment extends JPanel {
         
         searchFilters = new ArrayList<>();
         searchFilters.add(new NeighborhoodFilter());
-        searchFilters.add(new FovFilter(FOV_FILTER_ANGLE));
+        searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_BEHIND, false));
+        searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_INFRONT, true));
         searchFilters.add(new ObstructedVisionFilter());
         
     }
@@ -60,6 +63,15 @@ public class BoidSimulationEnvironment extends JPanel {
         for (Boid boid : boids) {
             boid.update(boids, rules, searchFilters);
         }
+        collectStats();
+    }
+    
+    private void collectStats() {
+    	Stats stats = new Stats();
+    	for (Boid boid : boids) {
+    		stats.addStats(boid.stats);
+    	}
+    	stats.divideBy(boids.size());
     }
 
     @Override

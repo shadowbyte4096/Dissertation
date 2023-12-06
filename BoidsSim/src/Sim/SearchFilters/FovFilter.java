@@ -8,14 +8,16 @@ import Sim.BoidSimulationEnvironment;
 
 public class FovFilter implements IFilter{
 
-	private double searchAngle;
+	private double searchAngle; //the angles which will be filtered out
+	private boolean forwards = true; // the direction from which angles get filtered out
 	
 	public FovFilter() {
-		this(135); //default search angle
+		this(135, false); //default search angle
 	}
 	
-	public FovFilter(double angle) {
+	public FovFilter(double angle, boolean forwards) {
 		searchAngle = angle;
+		this.forwards = forwards;
 	}
 	
 	@Override
@@ -43,8 +45,16 @@ public class FovFilter implements IFilter{
                 angleDifference += 2 * Math.PI;
             angleDifference -= Math.PI;
             
-            if (Math.abs(angleDifference) > searchAngle * (Math.PI/180)) {
-            	continue;
+            if (forwards) {
+                // Filter out boids infornt
+                if (Math.abs(angleDifference) < searchAngle * (Math.PI/180)) {
+                    continue;
+                }
+            } else {
+                // Filter out boids behind
+                if (Math.abs(angleDifference) > Math.PI - (searchAngle * (Math.PI/180))) {
+                    continue;
+                }
             }
 
             visibleBoids.add(other);

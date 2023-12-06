@@ -3,17 +3,20 @@ package Sim.Boid;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import Sim.BoidSimulationEnvironment;
 import Sim.Vector;
 import Sim.Rules.IRule;
 import Sim.SearchFilters.IFilter;
+import Sim.Stats.Stats;
 
 public class Boid {
 	public static final double MAX_SPEED = 2.0;
     public static final double MAX_FORCE = 0.03;
-    public static final double NEIGHBORHOOD_RADIUS = 50.0;
+    public static final double NEIGHBORHOOD_RADIUS = 100.0;
     public static final double SEPARATION_DISTANCE = 20.0;
     public static final double SIZE = 10.0;
 	
@@ -21,6 +24,7 @@ public class Boid {
 	public double y;
     public double velocityX;
     public double velocityY;
+    public Stats stats;
     
     public Boid(double x, double y, double velocityX, double velocityY, Boolean test) {
         this.x = x;
@@ -31,9 +35,14 @@ public class Boid {
 
     public void update(List<Boid> boids, List<IRule> rules, List<IFilter> filters) {
         
+    	
+    	List<Boid> unfilteredBoids = new ArrayList<>();
+    	unfilteredBoids = boids;
     	for (IFilter filter : filters){
     		boids = filter.filter(this, boids);
     	}
+    	
+    	collectStats(unfilteredBoids, boids);
     	
     	List<Vector> changes = new ArrayList<>();
     	for (IRule rule : rules) {
@@ -69,20 +78,45 @@ public class Boid {
         }
     }
     
-    public double distanceTo(Boid other) {
-        double diffX = Math.abs(x - other.x);
-        double diffY = Math.abs(y - other.y);
+    public Vector FindLocalCoordinates(Boid other) {
+    	double otherX = other.x;
+        double otherY = other.y;
 
-        if (diffX > BoidSimulationEnvironment.WIDTH / 2) {
-            diffX = BoidSimulationEnvironment.WIDTH - diffX;
+        if (Math.abs(otherX - x) > BoidSimulationEnvironment.WIDTH / 2) {
+            otherX = otherX < x ? otherX + BoidSimulationEnvironment.WIDTH : otherX - BoidSimulationEnvironment.WIDTH;
         }
-        if (diffY > BoidSimulationEnvironment.HEIGHT / 2) {
-            diffY = BoidSimulationEnvironment.HEIGHT - diffY;
+        if (Math.abs(otherY - y) > BoidSimulationEnvironment.HEIGHT / 2) {
+            otherY = otherY < y ? otherY + BoidSimulationEnvironment.HEIGHT : otherY - BoidSimulationEnvironment.HEIGHT;
         }
+		return new Vector(otherX, otherY);
+    }
+    
+    public double distanceTo(Boid other) {
+    	Vector local = FindLocalCoordinates(other);
+        double diffX = Math.abs(x - local.x);
+        double diffY = Math.abs(y - local.y);
 
         double distance = Math.sqrt(diffX * diffX + diffY * diffY);
 
         return distance;
+    }
+    
+    private void collectStats(List<Boid> neighbourhoodboids, List<Boid> visibleboids) {
+		stats = new Stats();
+		stats.separation = NEIGHBORHOOD_RADIUS;
+		stats.visibleSize = visibleboids.size();
+		stats.neighbourhoodSize = neighbourhoodboids.size();
+		for (Boid other : neighbourhoodboids) {
+            double distance = distanceTo(other);
+            if (distance < Boid.SIZE) {
+                stats.collisionCount++;
+            }
+            if (distance < stats.separation) {
+            	stats.separation = distance;
+            }
+            stats.cohesion += distance;
+            stats.alignment += Math.abs(Math.atan2(velocityY, velocityX) - Math.atan2(other.velocityY, other.velocityX));;
+        }
     }
 
     public void draw(Graphics g) {
