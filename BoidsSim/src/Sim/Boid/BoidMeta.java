@@ -2,12 +2,12 @@ package Sim.Boid;
 
 public class BoidMeta {
     public double distance;
-    public double angle1;
-    public double angle2;
+    public double left;
+    public double right;
 
-    public BoidMeta(double distance, double angle1, double angle2) {
+    public BoidMeta(double distance, double left, double right) {
         this.distance = distance;
-        this.angle1 = angle1;
-        this.angle2 = angle2;
+        this.left = left;
+        this.right = right;
     }
 }

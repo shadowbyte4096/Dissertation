@@ -4,6 +4,8 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+
 import javax.swing.JPanel;
 
 import Sim.Boid.Boid;
@@ -25,12 +27,14 @@ public class BoidSimulationEnvironment extends JPanel {
     private static final double ALIGNMENT_WEIGHT = 1;
     private static final double COHESION_WEIGHT = 1;
     private static final double SEPARATION_WEIGHT = 2;
-    private static final double FOV_FILTER_ANGLE_BEHIND = 45;
-    private static final double FOV_FILTER_ANGLE_INFRONT = 5;
+    private static final double FOV_FILTER_ANGLE_BEHIND = 1/2;
+    //private static final double FOV_FILTER_ANGLE_INFRONT = 5;
 	
     private List<Boid> boids;
     private List<IRule> rules;
     private List<IFilter> searchFilters;
+    
+    private int frame = 1;
 
     public BoidSimulationEnvironment() {
         boids = new ArrayList<>();
@@ -54,7 +58,7 @@ public class BoidSimulationEnvironment extends JPanel {
         searchFilters = new ArrayList<>();
         searchFilters.add(new NeighborhoodFilter());
         searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_BEHIND, false));
-        searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_INFRONT, true));
+        //searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_INFRONT, true));
         searchFilters.add(new ObstructedVisionFilter());
         
     }
@@ -64,14 +68,20 @@ public class BoidSimulationEnvironment extends JPanel {
             boid.update(boids, rules, searchFilters);
         }
         collectStats();
+        frame += 1;
     }
     
     private void collectStats() {
     	Stats stats = new Stats();
-    	for (Boid boid : boids) {
-    		stats.addStats(boid.stats);
-    	}
-    	stats.divideBy(boids.size());
+    	
+    	List<Stats> boidStats = boids.stream()
+                .map(boid -> boid.stats)
+                .collect(Collectors.toList());
+    	
+    	stats.globalise(boidStats);
+    	stats.addStats(boidStats);
+    	stats.divideBy(boidStats.size());
+    	stats.print(frame);
     }
 
     @Override

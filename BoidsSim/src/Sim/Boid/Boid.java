@@ -11,6 +11,7 @@ import Sim.BoidSimulationEnvironment;
 import Sim.Vector;
 import Sim.Rules.IRule;
 import Sim.SearchFilters.IFilter;
+import Sim.SearchFilters.NeighborhoodFilter;
 import Sim.Stats.Stats;
 
 public class Boid {
@@ -42,7 +43,8 @@ public class Boid {
     		boids = filter.filter(this, boids);
     	}
     	
-    	collectStats(unfilteredBoids, boids);
+    	List<Boid> neighborhoodBoids = (new NeighborhoodFilter()).filter(this, unfilteredBoids);
+    	collectStats(unfilteredBoids, neighborhoodBoids, boids);
     	
     	List<Vector> changes = new ArrayList<>();
     	for (IRule rule : rules) {
@@ -101,21 +103,23 @@ public class Boid {
         return distance;
     }
     
-    private void collectStats(List<Boid> neighbourhoodboids, List<Boid> visibleboids) {
+    private void collectStats(List<Boid> allBoids, List<Boid> neighbourhoodBoids, List<Boid> visibleboids) {
 		stats = new Stats();
 		stats.separation = NEIGHBORHOOD_RADIUS;
 		stats.visibleSize = visibleboids.size();
-		stats.neighbourhoodSize = neighbourhoodboids.size();
-		for (Boid other : neighbourhoodboids) {
+		stats.neighbourhoodSize = neighbourhoodBoids.size();
+		stats.velocity = new Vector (velocityX, velocityY);
+		stats.velocity.normalize();
+		for (Boid other : allBoids) {
             double distance = distanceTo(other);
-            if (distance < Boid.SIZE) {
+            if (distance < Boid.SIZE && other != this) {
                 stats.collisionCount++;
             }
-            if (distance < stats.separation) {
+            if (distance < stats.separation && other != this) {
             	stats.separation = distance;
             }
             stats.cohesion += distance;
-            stats.alignment += Math.abs(Math.atan2(velocityY, velocityX) - Math.atan2(other.velocityY, other.velocityX));;
+            stats.alignment += Math.abs(Math.atan2(velocityY, velocityX) - Math.atan2(other.velocityY, other.velocityX));
         }
     }
 
