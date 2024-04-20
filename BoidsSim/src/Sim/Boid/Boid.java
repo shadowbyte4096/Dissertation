@@ -67,6 +67,8 @@ public class Boid {
         x += velocityX;
         y += velocityY;
 
+        System.out.println("Start:" + x + "," + y);
+        
         //wrap around
         if (x < 0) {
             x = BoidSimulationEnvironment.WIDTH;
@@ -78,6 +80,7 @@ public class Boid {
         } else if (y > BoidSimulationEnvironment.HEIGHT) {
             y = 0;
         }
+        System.out.println("End:" + x + "," + y);
     }
     
     public Vector FindLocalCoordinates(Boid other) {
