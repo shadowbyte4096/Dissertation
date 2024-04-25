@@ -66,8 +66,6 @@ public class Boid {
 
         x += velocityX;
         y += velocityY;
-
-        System.out.println("Start:" + x + "," + y);
         
         //wrap around
         if (x < 0) {
@@ -80,12 +78,15 @@ public class Boid {
         } else if (y > BoidSimulationEnvironment.HEIGHT) {
             y = 0;
         }
-        System.out.println("End:" + x + "," + y);
     }
     
     public Vector FindLocalCoordinates(Boid other) {
-    	double otherX = other.x;
-        double otherY = other.y;
+		return FindLocalCoordinates(new Vector (other.x, other.y));
+    }
+    
+    public Vector FindLocalCoordinates(Vector position) {
+    	double otherX = position.x;
+        double otherY = position.y;
 
         if (Math.abs(otherX - x) > BoidSimulationEnvironment.WIDTH / 2) {
             otherX = otherX < x ? otherX + BoidSimulationEnvironment.WIDTH : otherX - BoidSimulationEnvironment.WIDTH;
@@ -97,7 +98,11 @@ public class Boid {
     }
     
     public double distanceTo(Boid other) {
-    	Vector local = FindLocalCoordinates(other);
+        return distanceTo(new Vector (other.x, other.y));
+    }
+    
+    public double distanceTo(Vector position) {
+    	Vector local = FindLocalCoordinates(position);
         double diffX = Math.abs(x - local.x);
         double diffY = Math.abs(y - local.y);
 
@@ -108,12 +113,15 @@ public class Boid {
     
     private void collectStats(List<Boid> allBoids, List<Boid> neighbourhoodBoids, List<Boid> visibleboids) {
 		stats = new Stats();
+		stats.position = new Vector(x, y);
+		stats.velocity = new Vector (velocityX, velocityY);
 		stats.separation = NEIGHBORHOOD_RADIUS;
 		stats.visibleSize = visibleboids.size();
 		stats.neighbourhoodSize = neighbourhoodBoids.size();
-		stats.velocity = new Vector (velocityX, velocityY);
 		stats.velocity.normalize();
+		Vector avgPosition = new Vector();
 		for (Boid other : allBoids) {
+			avgPosition.add(new Vector(other.x, other.y));
             double distance = distanceTo(other);
             if (distance < Boid.SIZE && other != this) {
                 stats.collisionCount++;
@@ -121,9 +129,10 @@ public class Boid {
             if (distance < stats.separation && other != this) {
             	stats.separation = distance;
             }
-            stats.cohesion += distance;
             stats.alignment += Math.abs(Math.atan2(velocityY, velocityX) - Math.atan2(other.velocityY, other.velocityX));
         }
+		avgPosition.divide(allBoids.size());
+        stats.cohesion = distanceTo(avgPosition);
     }
 
     public void draw(Graphics g) {

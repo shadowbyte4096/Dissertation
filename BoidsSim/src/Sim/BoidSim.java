@@ -7,7 +7,7 @@ public class BoidSim {
         JFrame frame = new JFrame("Boid Simulation");
         BoidSimulationEnvironment environment = new BoidSimulationEnvironment();
         frame.add(environment);
-        frame.setSize(800, 600);
+        frame.setSize(BoidSimulationEnvironment.WIDTH, BoidSimulationEnvironment.HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 

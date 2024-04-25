@@ -26,22 +26,44 @@ public class BoidSimulationEnvironment extends JPanel {
 
     private static final double ALIGNMENT_WEIGHT = 1;
     private static final double COHESION_WEIGHT = 1;
-    private static final double SEPARATION_WEIGHT = 2;
-    private static final double FOV_FILTER_ANGLE_BEHIND = 1/2;
+    private static final double SEPARATION_WEIGHT = 1.5;
+    //private static final double FOV_FILTER_ANGLE_BEHIND = 40/2;
     //private static final double FOV_FILTER_ANGLE_INFRONT = 5;
 	
     private List<Boid> boids;
     private List<IRule> rules;
     private List<IFilter> searchFilters;
     
-    private int frame = 1;
+    private int frame = 7001;
+    
+    private List<List<IFilter>> configs;
+    private List<String> configNames;
+    private String statsFileName = "";
 
     public BoidSimulationEnvironment() {
-        boids = new ArrayList<>();
+    	
+    	configs = new ArrayList<>();
+    	configNames = new ArrayList<>();
+    	
+    	for (double angle=0; angle < 142/2; angle += 20/2) {
+    		for (double i=1; i <= 5; i++) {
+    			List<IFilter> filters = new ArrayList<>();
+            	filters.add(new NeighborhoodFilter());
+            	filters.add(new FovFilter(angle, false));
+            	filters.add(new ObstructedVisionFilter());
+            	configs.add(filters);
+            	configNames.add("Stats-" + angle*2 + "-" + i);
+    		}
+    		
+    	}
+    }
+    
+    private void newRun(List<IFilter> filters) {
+    	boids = new ArrayList<>();
         
         Random random = new Random();
         Boolean test = random.nextBoolean();
-        random = new Random(1);
+        //random = new Random(1);
         for (int i = 0; i < NUM_BOIDS; i++) {
             double x = random.nextDouble() * WIDTH;
             double y = random.nextDouble() * HEIGHT;
@@ -55,20 +77,33 @@ public class BoidSimulationEnvironment extends JPanel {
         rules.add(new CohesionRule(COHESION_WEIGHT));
         rules.add(new SeperationRule(SEPARATION_WEIGHT));
         
-        searchFilters = new ArrayList<>();
-        searchFilters.add(new NeighborhoodFilter());
-        searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_BEHIND, false));
-        //searchFilters.add(new FovFilter(FOV_FILTER_ANGLE_INFRONT, true));
-        searchFilters.add(new ObstructedVisionFilter());
-        
+        searchFilters = filters;
+    }
+    
+    private boolean checkForNewConfig() {
+    	if (frame > 7000) {
+    		if (!configs.isEmpty()) {
+    			newRun(configs.remove(0));
+    			statsFileName = configNames.remove(0);
+        		frame = 0;
+        		return false;
+    		}
+    		else {
+    			return true;
+    		}
+    	}
+    	return false;
+    	
     }
 
     public void update() {
-        for (Boid boid : boids) {
-            boid.update(boids, rules, searchFilters);
-        }
-        collectStats();
-        frame += 1;
+    	if (!checkForNewConfig()) {
+    		for (Boid boid : boids) {
+                boid.update(boids, rules, searchFilters);
+            }
+            collectStats();
+            frame += 1;
+    	}
     }
     
     private void collectStats() {
@@ -81,7 +116,7 @@ public class BoidSimulationEnvironment extends JPanel {
     	stats.globalise(boidStats);
     	stats.addStats(boidStats);
     	stats.divideBy(boidStats.size());
-    	stats.print(frame);
+    	stats.print(frame, statsFileName);
     }
 
     @Override
